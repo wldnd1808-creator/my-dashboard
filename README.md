@@ -1,8 +1,29 @@
 # my-dashboard — ICCU 품질 분석 대시보드
 
-현대/기아 ICCU 결함 가상 데이터 기반 Streamlit 대시보드입니다.
+현대/기아 ICCU 결함 가상 데이터 기반 **Next.js** 대시보드입니다.  
+(기존 Streamlit 앱은 `iccu_streamlit_app.py`로 유지됩니다.)
 
-## 실행 방법
+## Next.js 실행 방법 (권장)
+
+1. **패키지 설치**
+   ```bash
+   cd my-dashboard
+   npm install
+   ```
+
+2. **개발 서버 실행**
+   ```bash
+   npm run dev
+   ```
+   - 브라우저: http://localhost:3000
+
+3. **프로덕션 빌드 및 실행**
+   ```bash
+   npm run build
+   npm start
+   ```
+
+## Streamlit 실행 방법 (레거시)
 
 1. **패키지 설치**
    ```bash
@@ -15,40 +36,16 @@
    ```bash
    py -m streamlit run iccu_streamlit_app.py --server.address 0.0.0.0
    ```
-
-3. **브라우저**
-   - 이 PC: http://localhost:8501  
-   - 다른 노트북: http://[이 PC의 IPv4 주소]:8501 (같은 Wi‑Fi)
-
-## GitHub에 푸시
-
-이 폴더에서만 아래를 실행하세요.
-
-```bash
-cd my-dashboard
-git add .
-git commit -m "ICCU 대시보드 및 Supabase 스키마"
-git push origin main
-```
-
-원격에 기존 커밋이 있어 푸시가 거부되면:
-
-```bash
-git pull origin main --allow-unrelated-histories
-# 충돌 해결 후
-git push origin main
-```
-
-또는 원격을 이 폴더 내용으로 덮어쓰려면:
-
-```bash
-git push origin main --force
-```
+   - 브라우저: http://localhost:8501
 
 ## 포함 파일
 
-- `iccu_streamlit_app.py` — Streamlit 대시보드
-- `iccu_defect_analysis_data.csv` — 가상 데이터
-- `run_iccu_dashboard.bat` / `allow_dashboard_firewall.bat` — 실행·방화벽
+- **Next.js**: `app/` (페이지·API), `types/`, `iccu_defect_analysis_data.csv` (데이터)
+- **Streamlit (레거시)**: `iccu_streamlit_app.py`, `run_iccu_dashboard.bat`, `allow_dashboard_firewall.bat`
 - `supabase_iccu_schema.sql` — Supabase DDL
 - `ICCU_Streamlit_실행방법.md` / `ICCU_품질분석_보고서_요약.md` — 문서
+
+## Vercel 배포
+
+이 프로젝트는 Next.js이므로 Vercel에 연결하면 자동으로 빌드·배포됩니다.  
+`vercel.json`은 Next.js 프레임워크로 설정되어 있습니다.
