@@ -21,24 +21,37 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 sticky top-0 z-50 w-full">
-      <div className="flex items-center">
-        <h1 className="text-xl font-bold text-slate-800">ICCU 품질 분석</h1>
+    <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 sticky top-0 z-50 w-full shrink-0">
+      <div className="flex items-center min-w-0">
+        <h1 className="text-xl font-bold text-slate-800 truncate">ICCU 품질 분석</h1>
       </div>
 
-      <div className="flex items-center gap-2">
-        {/* 1. 알림 아이콘 버튼 영역 */}
-        <div className="relative flex items-center" ref={dropdownRef}>
-          <button 
+      <div className="flex items-center gap-2 shrink-0">
+        {/* 1. 알림 아이콘 버튼 영역 - 항상 렌더, 조건 없음 */}
+        <div className="relative flex items-center justify-center" ref={dropdownRef}>
+          <button
+            type="button"
             onClick={() => setShowDropdown(!showDropdown)}
-            className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors flex items-center justify-center"
+            className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors flex items-center justify-center min-w-[40px] min-h-[40px]"
+            aria-label="알림"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
-              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="shrink-0"
+            >
+              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
             </svg>
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" aria-hidden />
             )}
           </button>
 
