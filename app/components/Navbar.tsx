@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useNotifications } from "../contexts/NotificationContext";
-
+import { LucideBell } from "lucide-react";
 const RECENT_ALERTS_COUNT = 5;
 
 /** 상단 바: 종 아이콘(알림) + 사용자 정보 */
