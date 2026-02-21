@@ -49,6 +49,7 @@ export default function Navbar() {
             className="relative p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
             aria-label="알림"
           >
+            {/* Bell 아이콘 (SVG) */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="22"
@@ -63,6 +64,7 @@ export default function Navbar() {
               <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
               <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
             </svg>
+            {/* 빨간색 배지 (새 알림 있을 때) */}
             {hasNewNotifications && (
               <span
                 className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white"
