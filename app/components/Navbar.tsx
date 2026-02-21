@@ -117,7 +117,16 @@ export default function Navbar() {
             </div>
           )}
         </div>
-
+{/* 알림 아이콘 추가 */}
+<button 
+  onClick={() => setShowDropdown(!showDropdown)}
+  className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-full"
+>
+  <LucideBell size={24} />
+  {hasNotifications && (
+    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+  )}
+</button>
         {/* 사용자 정보 */}
         <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
           <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-sm font-medium">
