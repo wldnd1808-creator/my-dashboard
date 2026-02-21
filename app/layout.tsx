@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Navbar from "./components/Navbar";
+import { NotificationProvider } from "./contexts/NotificationContext";
 
 export const metadata: Metadata = {
   title: "ICCU 품질 분석 대시보드",
@@ -13,7 +15,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <body className="min-h-screen flex flex-col">
+        <NotificationProvider>
+          <Navbar />
+          <div className="flex flex-1 min-h-0">{children}</div>
+        </NotificationProvider>
+      </body>
     </html>
   );
 }

@@ -150,7 +150,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="flex flex-1 min-h-0">
       {/* Sidebar */}
       <aside className="w-64 shrink-0 bg-slate-800 text-white p-4 flex flex-col gap-4">
         <h2 className="font-semibold text-lg">필터</h2>
