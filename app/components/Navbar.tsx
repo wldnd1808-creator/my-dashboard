@@ -1,18 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import { useNotifications } from "../contexts/NotificationContext";
-
-const RECENT_ALERTS_COUNT = 5;
 
 export default function Navbar() {
   const { alerts, unreadCount, markAllRead } = useNotifications();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const hasNotifications = unreadCount > 0;
-  const recentAlerts = alerts.slice(0, RECENT_ALERTS_COUNT);
+  const recentAlerts = alerts.slice(0, 5);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -23,11 +19,6 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const handleMarkAllRead = () => {
-    markAllRead();
-    setShowDropdown(false);
-  };
 
   return (
     <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 sticky top-0 z-50">
@@ -46,17 +37,17 @@ export default function Navbar() {
               <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
               <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
             </svg>
-            {hasNotifications && (
+            {unreadCount > 0 && (
               <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
             )}
           </button>
 
-          {/* 알림 드롭다운 창 */}
+          {/* 알림 드롭다운 */}
           {showDropdown && (
-            <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden">
+            <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden z-50">
               <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                 <span className="text-sm font-semibold text-slate-700">최근 알림</span>
-                <button onClick={handleMarkAllRead} className="text-xs text-blue-600 hover:underline">모두 읽음</button>
+                <button onClick={() => { markAllRead(); setShowDropdown(false); }} className="text-xs text-blue-600 hover:underline">모두 읽음</button>
               </div>
               <div className="max-h-96 overflow-y-auto">
                 {recentAlerts.length > 0 ? (
