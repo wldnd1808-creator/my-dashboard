@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>공정 에너지 최적화 & 탄소배출 모니터링 | 스마트 팩토리</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- 로그인 화면 -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-box">
+      <div class="login-brand">
+        <span class="login-icon">⚡</span>
+        <h1>스마트 팩토리</h1>
+        <p>공정 에너지 최적화 & 탄소배출 모니터링</p>
+        <p class="login-author">김지웅</p>
+      </div>
+      <form id="loginForm" class="login-form">
+        <div class="login-field">
+          <label for="loginId">아이디</label>
+          <input type="text" id="loginId" name="loginId" placeholder="아이디 입력" autocomplete="username" required />
+        </div>
+        <div class="login-field">
+          <label for="loginPw">비밀번호</label>
+          <input type="password" id="loginPw" name="loginPw" placeholder="비밀번호 입력" autocomplete="current-password" required />
+        </div>
+        <p id="loginError" class="login-error hidden"></p>
+        <button type="submit" class="btn-login">로그인</button>
+      </form>
+      <p class="login-hint">※ 데모: admin / admin123</p>
+    </div>
+  </div>
+
+  <div id="appShell" class="app-shell hidden">
+    <!-- 왼쪽 사이드바 -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="sidebar-icon">⚡</span>
+        <span class="sidebar-title">스마트 팩토리</span>
+      </div>
+      <nav class="sidebar-nav" role="navigation">
+        <button type="button" class="nav-item active" data-page="energy" aria-current="page">
+          <span class="nav-icon">⚡</span>
+          <span>공정 에너지 최적화</span>
+        </button>
+
+        <div class="nav-group" data-group="monitoring">
+          <button type="button" class="nav-group-header" aria-expanded="true" aria-controls="nav-group-monitoring" id="nav-group-monitoring-btn">
+            <span class="nav-group-chevron">▾</span>
+            <span>모니터링</span>
+          </button>
+          <div class="nav-group-body" id="nav-group-monitoring">
+            <button type="button" class="nav-item nav-sub" data-page="process">
+              <span class="nav-icon">📅</span>
+              <span>공정 현황</span>
+            </button>
+            <button type="button" class="nav-item nav-sub" data-page="realtime">
+              <span class="nav-icon">🔄</span>
+              <span>공정 실시간 모델</span>
+            </button>
+            <button type="button" class="nav-item nav-sub" data-page="lotpass">
+              <span class="nav-icon">📊</span>
+              <span>LOT별 현황</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="nav-group" data-group="analysis">
+          <button type="button" class="nav-group-header" aria-expanded="true" aria-controls="nav-group-analysis" id="nav-group-analysis-btn">
+            <span class="nav-group-chevron">▾</span>
+            <span>지능형 분석</span>
+          </button>
+          <div class="nav-group-body" id="nav-group-analysis">
+            <button type="button" class="nav-item nav-sub" data-page="energy-visual">
+              <span class="nav-icon">📈</span>
+              <span>에너지 시각 분석</span>
+            </button>
+            <button type="button" class="nav-item nav-sub" data-page="quality">
+              <span class="nav-icon">📋</span>
+              <span>최근 품질 불량 분석</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+    </aside>
+
+    <div class="main-wrapper">
+    <div class="layout">
+    <header class="header">
+      <div class="header-brand">
+        <span class="header-icon" aria-hidden="true">⚡</span>
+        <div>
+          <h1 id="pageTitle">공정 에너지 최적화 & 탄소배출 모니터링</h1>
+          <p class="subtitle" id="pageSubtitle">비용·환경(ESG) 동시 고려 · AI 의사결정 가이드</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="current-time" id="currentTime">--:--</span>
+        <span class="tariff-badge" id="tariffBadge">요금대 확인 중</span>
+        <button type="button" class="btn-refresh" id="btnRefresh">새로고침</button>
+        <button type="button" class="btn-logout" id="btnLogout">로그아웃</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+    <!-- 페이지 1: 공정 에너지 최적화 -->
+    <div id="page-energy" class="page-panel active" role="tabpanel">
+    <!-- AI 의사결정 가이드 (핵심) -->
+    <section class="panel ai-panel" aria-label="AI 의사결정 가이드">
+      <div class="ai-panel-header">
+        <div>
+          <h2><span class="ai-badge">AI</span> 의사결정 가이드</h2>
+          <p class="ai-hint">전기 요금·탄소배출 기반 실시간 최적화 제안 · <span id="aiLastUpdate" class="ai-last-update">갱신 중…</span></p>
+        </div>
+      </div>
+      <div class="ai-suggestions" id="aiSuggestions">
+        <div class="ai-loading">AI 분석 중…</div>
+      </div>
+    </section>
+
+    <!-- 요약 카드 -->
+    <section class="cards">
+      <div class="card">
+        <span class="card-label">총 전력 소모</span>
+        <span class="card-value" id="totalPower">-</span>
+        <span class="card-unit">kWh/일</span>
+      </div>
+      <div class="card">
+        <span class="card-label">총 생산량 (현재/목표)</span>
+        <span class="card-value" id="totalProduction">-</span>
+        <span class="card-unit">개</span>
+      </div>
+      <div class="card">
+        <span class="card-label">제품 1개당 에너지 효율</span>
+        <span class="card-value" id="energyPerProduct">-</span>
+        <span class="card-unit">kWh/개</span>
+      </div>
+      <div class="card">
+        <span class="card-label">탄소배출 (CO₂)</span>
+        <span class="card-value" id="carbonEmission">-</span>
+        <span class="card-unit">tCO₂e/일</span>
+      </div>
+    </section>
+
+    <!-- 공정별 전력 vs 생산량 -->
+    <section class="panel">
+      <h2>공정별 전력 소모 vs 생산량</h2>
+      <p class="chart-desc">제품 1개당 에너지 효율(kWh/개) = 전력 소모 ÷ 생산량</p>
+      <div class="chart-container">
+        <canvas id="processEnergyChart"></canvas>
+      </div>
+    </section>
+
+    <!-- 공정별 상세 테이블 -->
+    <section class="panel">
+      <div class="panel-header">
+        <h2>공정별 에너지 효율 상세</h2>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>공정</th>
+              <th>전력 소모 (kWh)</th>
+              <th>생산량 (현재/목표)</th>
+              <th>제품 1개당 에너지 (kWh/개)</th>
+              <th>탄소배출 (kgCO₂e)</th>
+            </tr>
+          </thead>
+          <tbody id="processTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 분석·예측: 전·동기간 비교 -->
+    <section class="panel analysis-panel">
+      <h2>분석·예측</h2>
+      <p class="chart-desc">전·동기간 비교 및 예측 사용량</p>
+      <div class="analysis-grid">
+        <div class="analysis-card">
+          <div class="analysis-card-header">
+            <span class="analysis-label">전주 대비</span>
+          </div>
+          <div class="analysis-values">
+            <div class="analysis-row">
+              <span>전력</span>
+              <span id="compWeekPower" class="analysis-val">-</span>
+            </div>
+            <div class="analysis-row">
+              <span>생산량</span>
+              <span id="compWeekProd" class="analysis-val">-</span>
+            </div>
+            <div class="analysis-row">
+              <span>에너지 효율</span>
+              <span id="compWeekEff" class="analysis-val">-</span>
+            </div>
+          </div>
+        </div>
+        <div class="analysis-card">
+          <div class="analysis-card-header">
+            <span class="analysis-label">전달 대비</span>
+          </div>
+          <div class="analysis-values">
+            <div class="analysis-row">
+              <span>전력</span>
+              <span id="compMonthPower" class="analysis-val">-</span>
+            </div>
+            <div class="analysis-row">
+              <span>생산량</span>
+              <span id="compMonthProd" class="analysis-val">-</span>
+            </div>
+            <div class="analysis-row">
+              <span>에너지 효율</span>
+              <span id="compMonthEff" class="analysis-val">-</span>
+            </div>
+          </div>
+        </div>
+        <div class="analysis-card prediction-card">
+          <div class="analysis-card-header">
+            <span class="analysis-label">예측 (내일)</span>
+          </div>
+          <div class="analysis-values">
+            <div class="analysis-row">
+              <span>예상 전력</span>
+              <span id="predictPower" class="analysis-val">-</span>
+            </div>
+            <div class="analysis-row">
+              <span>예상 생산량</span>
+              <span id="predictProd" class="analysis-val">-</span>
+            </div>
+            <div class="analysis-row">
+              <span>예상 비용</span>
+              <span id="predictCost" class="analysis-val">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 시간대별 전기 요금 & 탄소배출 -->
+    <section class="panel two-charts">
+      <div class="chart-box">
+        <h2>시간대별 전기 요금</h2>
+        <p class="chart-desc">TOU(시간대별 요금) 기반 · 저렴한 시간대 가동 시 비용 절감</p>
+        <div class="chart-container">
+          <canvas id="tariffChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-box">
+        <h2>공정별 탄소배출 (ESG)</h2>
+        <p class="chart-desc">kgCO₂e 기준 · 환경 부담도 비교</p>
+        <div class="chart-container">
+          <canvas id="carbonChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    </div><!-- #page-energy -->
+
+    <!-- 페이지: 에너지 시각 분석 (시각/레이블 차별화) -->
+    <div id="page-energy-visual" class="page-panel" role="tabpanel" aria-hidden="true">
+    <section class="panel">
+      <div class="panel-header">
+        <h2>공정별 에너지 등급 및 효율 상세</h2>
+        <p class="chart-desc">에너지 등급 A(우수)~C(개선필요) · 최선/최악 공정 강조</p>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>공정</th>
+              <th>에너지 등급</th>
+              <th>전력 소모 (kWh)</th>
+              <th>생산량 (현재/목표)</th>
+              <th>제품 1개당 에너지 (kWh/개)</th>
+              <th>탄소배출 (kgCO₂e)</th>
+            </tr>
+          </thead>
+          <tbody id="processTableBodyVisual"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel heatmap-panel">
+      <h2>시간대별 공정 비용 히트맵</h2>
+      <p class="chart-desc">시간대 × 공정별 예상 전력 비용 (원/kWh 반영)</p>
+      <div class="heatmap-wrap" id="heatmapWrap"></div>
+      <div class="heatmap-legend">
+        <span>저비용</span>
+        <div class="heatmap-legend-bar"></div>
+        <span>고비용</span>
+      </div>
+    </section>
+
+    <section class="panel savings-panel">
+      <h2>절감 예상 효과</h2>
+      <p class="chart-desc">공정 개선 시 예상 절감금액·탄소감축량</p>
+      <div class="savings-grid" id="savingsGrid"></div>
+    </section>
+    </div><!-- #page-energy-visual -->
+
+    <!-- 페이지 2: 공정 현황 (달력) -->
+    <div id="page-process" class="page-panel" role="tabpanel" aria-hidden="true">
+    <section class="panel process-calendar-panel">
+      <h2>공정 현황</h2>
+      <p class="chart-desc">공정 데이터(factory DB) 기반 실시간 현황</p>
+      <div class="calendar-controls">
+        <button type="button" class="btn-cal-nav" id="calPrev" aria-label="이전 달">‹</button>
+        <h3 class="calendar-title" id="calTitle">2026년 2월</h3>
+        <button type="button" class="btn-cal-nav" id="calNext" aria-label="다음 달">›</button>
+      </div>
+      <div class="calendar-wrap">
+        <div class="calendar-header">
+          <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+      </div>
+    </section>
+    </div><!-- #page-process -->
+
+    <!-- 페이지 3: 공정 실시간 모델 (3D 모니터링) -->
+    <div id="page-realtime" class="page-panel" role="tabpanel" aria-hidden="true">
+    <section class="panel realtime-model-panel">
+      <div class="realtime-header">
+        <div>
+          <h2>3D 공정 실시간 모니터링</h2>
+          <p class="chart-desc">아이소메트릭 뷰 · LOT이 컨베이어를 따라 이동합니다.</p>
+        </div>
+        <span class="lot-badge-3d" id="realtimeLotTotal">0 LOT</span>
+      </div>
+      <div class="process-3d-wrap">
+        <div class="process-3d-scene" id="process3dScene">
+          <div class="process-3d-conveyor">
+            <div class="conveyor-track"></div>
+            <div class="conveyor-stripes"></div>
+            <div class="process-3d-stages" id="process3dStages"></div>
+            <div class="process-3d-lots" id="process3dLots"></div>
+          </div>
+        </div>
+      </div>
+      <div class="process-flow-legend">
+        <span class="legend-item"><span class="legend-dot pass"></span> 합격 LOT</span>
+        <span class="legend-item"><span class="legend-dot fail"></span> 불합격 LOT</span>
+        <button type="button" class="btn-refresh btn-realtime-refresh" id="btnRealtimeRefresh">새로고침</button>
+      </div>
+
+      <!-- 공정 흐름 개요 (파이프라인 뷰) -->
+      <div class="process-flow-overview">
+        <h3>공정 흐름 개요</h3>
+        <p class="chart-desc">공정 단계별 연결 상태 및 LOT 현황</p>
+        <div class="flow-pipeline" id="flowPipeline"></div>
+        <div class="flow-pipeline-legend">
+          <span class="legend-item"><span class="legend-dot pass"></span> 합격 LOT</span>
+          <span class="legend-item"><span class="legend-dot fail"></span> 불합격 LOT</span>
+          <span class="lot-total-pipeline" id="flowPipelineLotTotal">0 LOT</span>
+        </div>
+      </div>
+    </section>
+    </div><!-- #page-realtime -->
+
+    <!-- 페이지 4: LOT별 합격·불합격 -->
+    <div id="page-lotpass" class="page-panel" role="tabpanel" aria-hidden="true">
+    <section class="panel lot-pass-panel">
+      <h2>LOT별 합격·불합격 현황</h2>
+      <p class="chart-desc">LOT별 합격·불합격 (이번 달 2/1~2/28)</p>
+      <div class="lot-pass-summary">
+        <span class="lot-pass-count pass">합격: <strong id="lotPassCount">0</strong></span>
+        <span class="lot-pass-count fail">불합격: <strong id="lotFailCount">0</strong></span>
+      </div>
+      <div class="table-wrap table-scroll lot-pass-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>LOT</th>
+              <th>합격 여부</th>
+              <th>기록 수</th>
+              <th>최근 시각</th>
+            </tr>
+          </thead>
+          <tbody id="lotPassFailBody"></tbody>
+        </table>
+      </div>
+    </section>
+    </div><!-- #page-lotpass -->
+
+    <!-- 페이지 5: 최근 품질 불량 분석 -->
+    <div id="page-quality" class="page-panel" role="tabpanel" aria-hidden="true">
+    <section class="panel quality-defect-panel">
+      <h2>최근 품질 불량이 발생한 품목 분석</h2>
+      <p class="chart-desc">불합격 LOT 목록, 불량 영향 변수, FDC 알림을 한 화면에서 확인합니다.</p>
+      <div class="quality-defect-grid">
+        <div class="quality-lot-section">
+          <h3>최근 불합격 LOT <span class="lot-count" id="rejectedLotCount">0건</span></h3>
+          <div class="table-wrap table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>LOT</th>
+                  <th>기록 수</th>
+                  <th>최근 시각</th>
+                  <th>리튬 투입량 (kg)</th>
+                  <th>process_time</th>
+                  <th>습도 (%)</th>
+                  <th>탱크 압력 (kPa)</th>
+                </tr>
+              </thead>
+              <tbody id="rejectedLotBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="quality-side">
+          <div class="quality-vars-section">
+            <h3>불량 영향 변수 Top 10</h3>
+            <ul class="var-list" id="defectVarsList"></ul>
+          </div>
+          <div class="quality-fdc-section">
+            <h3>FDC 알림 <span class="fdc-count" id="fdcAlertCount">0건</span></h3>
+            <div class="fdc-content" id="fdcAlerts"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    </div><!-- #page-quality -->
+    </div><!-- .page-content -->
+
+    <footer class="footer">
+      <span>스마트 팩토리 · 공정 에너지 최적화</span>
+      <span class="footer-sep">|</span>
+      <span>AI 기반 의사결정 가이드</span>
+    </footer>
+    </div><!-- .layout -->
+    </div><!-- .main-wrapper -->
+
+    <!-- 오른쪽 사이드바: 공지사항, 커뮤니티 -->
+    <aside class="right-sidebar">
+      <div class="right-sidebar-section">
+        <div class="right-sidebar-header">
+          <h3>공지사항</h3>
+          <button type="button" class="btn-icon-add" id="btnAddNotice" aria-label="공지 추가">+</button>
+        </div>
+        <ul class="notice-list" id="noticeList"></ul>
+      </div>
+      <div class="right-sidebar-section">
+        <div class="right-sidebar-header">
+          <h3>커뮤니티</h3>
+          <button type="button" class="btn-icon-add" id="btnAddCommunity" aria-label="글 작성">+</button>
+        </div>
+        <ul class="community-list" id="communityList"></ul>
+      </div>
+      <button type="button" class="btn-chatbot" id="btnChatbot">챗봇 열기 <span class="chatbot-hint">팝업</span></button>
+    </aside>
+
+    <!-- 공지 수정/추가 모달 -->
+    <div id="noticeEditModal" class="detail-modal hidden" role="dialog" aria-modal="true">
+      <div class="detail-modal-backdrop" id="noticeEditModalBackdrop"></div>
+      <div class="detail-modal-content notice-edit-content">
+        <div class="detail-modal-header">
+          <h2 id="noticeEditTitle">공지 수정</h2>
+          <button type="button" class="detail-modal-close" id="noticeEditModalClose" aria-label="닫기">×</button>
+        </div>
+        <form id="noticeEditForm" class="notice-edit-form">
+          <div class="notice-edit-field">
+            <label for="noticeEditInputTitle">제목</label>
+            <input type="text" id="noticeEditInputTitle" required placeholder="공지 제목" />
+          </div>
+          <div class="notice-edit-field">
+            <label for="noticeEditInputDate">날짜</label>
+            <input type="text" id="noticeEditInputDate" required placeholder="2025.01.27" />
+          </div>
+          <div class="notice-edit-field notice-edit-check">
+            <input type="checkbox" id="noticeEditInputImportant" />
+            <label for="noticeEditInputImportant">중요 공지</label>
+          </div>
+          <div class="notice-edit-field">
+            <label for="noticeEditInputContent">내용</label>
+            <textarea id="noticeEditInputContent" rows="10" placeholder="공지 내용을 입력하세요."></textarea>
+          </div>
+          <div class="notice-edit-actions">
+            <button type="button" class="btn-cancel" id="noticeEditCancel">취소</button>
+            <button type="submit" class="btn-save">저장</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 상세 보기 모달 -->
+    <div id="detailModal" class="detail-modal hidden" role="dialog" aria-modal="true" aria-labelledby="detailModalTitle">
+      <div class="detail-modal-backdrop" id="detailModalBackdrop"></div>
+      <div class="detail-modal-content">
+        <div class="detail-modal-header">
+          <h2 id="detailModalTitle" class="detail-modal-title"></h2>
+          <div class="detail-modal-meta" id="detailModalMeta"></div>
+          <button type="button" class="detail-modal-close" id="detailModalClose" aria-label="닫기">×</button>
+        </div>
+        <div class="detail-modal-body" id="detailModalBody"></div>
+      </div>
+    </div>
+
+    <!-- 히트맵 상세 분석 모달 -->
+    <div id="heatmapDetailModal" class="detail-modal heatmap-detail-modal hidden" role="dialog" aria-modal="true" aria-labelledby="heatmapDetailTitle">
+      <div class="detail-modal-backdrop" id="heatmapDetailModalBackdrop"></div>
+      <div class="detail-modal-content heatmap-detail-content">
+        <div class="detail-modal-header">
+          <h2 id="heatmapDetailTitle" class="detail-modal-title">상세 분석</h2>
+          <button type="button" class="detail-modal-close" id="heatmapDetailModalClose" aria-label="닫기">×</button>
+        </div>
+        <div class="heatmap-detail-body">
+          <div class="heatmap-detail-widgets">
+            <div class="heatmap-detail-widget">
+              <span class="heatmap-detail-label">예상 비용</span>
+              <span class="heatmap-detail-value" id="heatmapDetailCost">—</span>
+            </div>
+            <div class="heatmap-detail-widget">
+              <span class="heatmap-detail-label">탄소 배출량</span>
+              <span class="heatmap-detail-value" id="heatmapDetailCarbon">—</span>
+            </div>
+          </div>
+          <div id="heatmapDetailSuggest" class="heatmap-detail-suggest hidden">
+            <p id="heatmapDetailSuggestText" class="heatmap-detail-suggest-text"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI 사전 대응 알림 팝업 -->
+    <div id="aiAlertPopup" class="ai-alert-popup hidden" role="alertdialog" aria-modal="true" aria-labelledby="aiAlertTitle">
+      <div class="ai-alert-backdrop"></div>
+      <div class="ai-alert-glass">
+        <div class="ai-alert-badge"><span class="ai-alert-icon">⚡</span> AI 사전 대응</div>
+        <h2 id="aiAlertTitle" class="ai-alert-title">요금 피크 사전 알림</h2>
+        <p class="ai-alert-message">30분 뒤 요금 피크가 예상됩니다. 소성 공정 가동률을 20% 낮춰 요금을 절감하시겠습니까?</p>
+        <div class="ai-alert-actions">
+          <button type="button" class="ai-alert-btn ai-alert-btn-primary" id="aiAlertApply">즉시 적용</button>
+          <button type="button" class="ai-alert-btn ai-alert-btn-secondary" id="aiAlertRemind">5분 뒤 재알림</button>
+          <button type="button" class="ai-alert-btn ai-alert-btn-ghost" id="aiAlertDismiss">무시</button>
+        </div>
+      </div>
+    </div>
+  </div><!-- .app-shell -->
+  <script src="app.js"></script>
+</body>
+</html>

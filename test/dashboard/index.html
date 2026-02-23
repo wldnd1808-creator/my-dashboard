@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>분석 모델 대시보드</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="config.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+</head> 
+<body>
+  <div id="failureAlertToast" class="failure-alert-toast hidden" role="alert" aria-live="assertive"></div>
+  <div class="layout">
+    <header class="header">
+      <h1>분석 모델 대시보드</h1>
+      <p class="subtitle">파이썬 예측 모델 · MariaDB · Node.js + FastAPI</p>
+      <div class="header-actions">
+        <span id="loadingIndicator" class="loading-indicator hidden" aria-hidden="true">불러오는 중…</span>
+        <button type="button" class="btn-refresh" id="btnRefresh">새로고침</button>
+      </div>
+    </header>
+
+    <nav class="tab-nav" role="tablist">
+      <button type="button" class="tab-btn active" role="tab" data-tab="analysis" aria-selected="true">정량 분석 모델</button>
+      <button type="button" class="tab-btn" role="tab" data-tab="used-cars" aria-selected="false">중고차 가격 예측</button>
+    </nav>
+
+    <main class="main">
+      <!-- 탭 1: 정량 분석 모델 -->
+      <div id="tab-analysis" class="tab-panel active" role="tabpanel">
+      <section class="panel system-status-panel" aria-label="시스템 상태">
+        <h2>시스템 상태</h2>
+        <div class="status-grid" id="systemStatus">
+          <div class="status-item">
+            <span class="status-label">Node.js (대시보드 API)</span>
+            <span class="status-badge pending" id="statusNode">확인 중…</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">FastAPI (예측 API)</span>
+            <span class="status-badge pending" id="statusFastApi">확인 중…</span>
+          </div>
+        </div>
+        <p class="status-hint" id="statusHint">백엔드가 모두 연결되면 예측을 실행할 수 있습니다.</p>
+      </section>
+
+      <div id="emptyStateGuide" class="empty-state-guide hidden" role="status" aria-live="polite"></div>
+
+      <section class="panel insights-panel" aria-label="지능형 모니터링">
+        <h2>지능형 모니터링 (AI 인사이트)</h2>
+        <p class="insights-hint">예측값·입력 데이터 이상 징후와 모델 성능 하락을 자동으로 탐지합니다.</p>
+        <div class="insights-grid">
+          <div class="insight-block anomaly-block">
+            <h3>이상 징후 알림</h3>
+            <div id="anomalyAlerts" class="insight-content">
+              <span class="insight-loading">확인 중…</span>
+            </div>
+          </div>
+          <div class="insight-block performance-block">
+            <h3>성능 하락 알림</h3>
+            <div id="performanceAlert" class="insight-content">
+              <span class="insight-loading">확인 중…</span>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn-refresh btn-insights-refresh" id="btnInsightsRefresh">인사이트 새로고침</button>
+      </section>
+
+      <section class="cards">
+        <div class="card">
+          <span class="card-label">훈련 데이터</span>
+          <span class="card-value" id="trainingCount">-</span>
+          <span class="card-unit">건</span>
+        </div>
+        <div class="card">
+          <span class="card-label">예측 결과</span>
+          <span class="card-value" id="predictionsCount">-</span>
+          <span class="card-unit">건</span>
+        </div>
+        <div class="card">
+          <span class="card-label">평균 예측값</span>
+          <span class="card-value" id="avgPrediction">-</span>
+          <span class="card-unit" id="avgPredictionUnit">mAh/g</span>
+        </div>
+        <div class="card">
+          <span class="card-label">최근 예측값</span>
+          <span class="card-value" id="latestPrediction">-</span>
+          <span class="card-unit" id="latestPredictionUnit">mAh/g</span>
+        </div>
+      </section>
+
+      <section class="panel predict-panel">
+        <h2>예측 실행</h2>
+        <p class="predict-hint" id="predictHint">💡 입력 범위: 소성온도 1500~3000°C, 소성시간 12~36시간</p>
+        
+        <div class="preset-buttons">
+          <span class="preset-label">빠른 테스트:</span>
+          <button type="button" class="btn-preset" data-temp="950" data-time="18">높은 성능</button>
+          <button type="button" class="btn-preset" data-temp="900" data-time="15">균형잡힌 조건</button>
+          <button type="button" class="btn-preset" data-temp="850" data-time="12">중간 조건</button>
+          <button type="button" class="btn-preset" data-temp="800" data-time="10">경계선 테스트</button>
+          <button type="button" class="btn-preset" data-temp="780" data-time="9">불량 가능</button>
+        </div>
+        
+        <form id="predictForm" class="predict-form">
+          <div class="form-row">
+            <label for="feature1" id="feature1Label">소성온도 (Feature1, °C)</label>
+            <input type="number" id="feature1" name="feature1" step="any" value="900" min="500" max="1200" required />
+          </div>
+          <div class="form-row">
+            <label for="feature2" id="feature2Label">소성시간 (Feature2, 시간)</label>
+            <input type="number" id="feature2" name="feature2" step="any" value="15" min="0" max="48" required />
+          </div>
+          <button type="submit" class="btn-predict">예측</button>
+        </form>
+        <div id="predictResult" class="predict-result" aria-live="polite"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>훈련 데이터</h2>
+          <div class="panel-controls">
+            <label for="trainingLimit" class="limit-label">표시 개수:</label>
+            <select id="trainingLimit" class="limit-select">
+              <option value="50">50</option>
+              <option value="100" selected>100</option>
+              <option value="200">200</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>id</th>
+                <th>생성일시</th>
+                <th>소성온도</th>
+                <th>소성시간</th>
+                <th>방전용량</th>
+              </tr>
+            </thead>
+            <tbody id="trainingBody"></tbody>
+          </table>
+        </div>
+        <p id="trainingEmpty" class="empty-msg">데이터 없음</p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>예측 결과</h2>
+          <div class="panel-controls">
+            <label for="predictionsLimit" class="limit-label">표시 개수:</label>
+            <select id="predictionsLimit" class="limit-select">
+              <option value="50">50</option>
+              <option value="100" selected>100</option>
+              <option value="200">200</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>id</th>
+                <th>생성일시</th>
+                <th>모델</th>
+                <th>입력 (소성온도, 소성시간)</th>
+                <th>예측값 (mAh/g)</th>
+                <th>품질 판정</th>
+              </tr>
+            </thead>
+            <tbody id="predictionsBody"></tbody>
+          </table>
+        </div>
+        <p id="predictionsEmpty" class="empty-msg">데이터 없음</p>
+      </section>
+
+      <section class="panel">
+        <h2>예측 결과 시각화</h2>
+        <div class="chart-container">
+          <canvas id="predictionsChart"></canvas>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 id="temperatureChartTitle">소성온도 vs 방전용량 추이</h2>
+        <p class="chart-description" id="temperatureChartDesc">훈련 데이터에서 소성온도(Feature1)에 따른 방전용량(Target)의 변화를 보여줍니다.</p>
+        <div class="chart-container">
+          <canvas id="temperatureCapacityChart"></canvas>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>훈련 데이터 분포</h2>
+        <div class="chart-container">
+          <canvas id="trainingChart"></canvas>
+        </div>
+      </section>
+
+      <section class="panel timeline-panel">
+        <div class="panel-header">
+          <h2>이벤트 타임라인</h2>
+          <div class="panel-controls">
+            <label for="eventsLimit" class="limit-label">표시 개수:</label>
+            <select id="eventsLimit" class="limit-select">
+              <option value="20">20</option>
+              <option value="50" selected>50</option>
+              <option value="100">100</option>
+            </select>
+            <button type="button" class="btn-refresh btn-timeline-refresh" id="btnTimelineRefresh" title="타임라인 새로고침">새로고침</button>
+          </div>
+        </div>
+        <p class="timeline-hint">위험 신호 감지 시 Slack 알림 발송 및 DB 기록 이벤트가 여기에 표시됩니다.</p>
+        <div class="timeline" id="timeline">
+          <div class="timeline-list" id="timelineList"></div>
+          <p id="timelineEmpty" class="empty-msg">이벤트 없음</p>
+        </div>
+      </section>
+      </div>
+
+      <!-- 탭 2: 중고차 가격 예측 -->
+      <div id="tab-used-cars" class="tab-panel" role="tabpanel" aria-hidden="true">
+        <section class="panel system-status-panel" aria-label="시스템 상태">
+          <h2>시스템 상태</h2>
+          <div class="status-grid" id="systemStatusCars">
+            <div class="status-item">
+              <span class="status-label">Node.js (대시보드 API)</span>
+              <span class="status-badge pending" id="statusNodeCars">확인 중…</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">FastAPI (예측 API)</span>
+              <span class="status-badge pending" id="statusFastApiCars">확인 중…</span>
+            </div>
+          </div>
+        </section>
+        <section class="cards">
+          <div class="card">
+            <span class="card-label">전체 차량</span>
+            <span class="card-value" id="carsTotalCount">-</span>
+            <span class="card-unit">대</span>
+          </div>
+          <div class="card">
+            <span class="card-label">평균 예측가격</span>
+            <span class="card-value" id="carsAvgPrice">-</span>
+            <span class="card-unit">만원</span>
+          </div>
+          <div class="card">
+            <span class="card-label">최고 예측가격</span>
+            <span class="card-value" id="carsMaxPrice">-</span>
+            <span class="card-unit">만원</span>
+          </div>
+        </section>
+        <section class="panel histogram-panel">
+          <h2>1. 주행거리별 고장 빈도 히스토그램</h2>
+          <div class="histogram-section">
+            <div class="histogram-area">
+              <div class="chart-container chart-container--histogram">
+                <canvas id="mileageHistogramChart"></canvas>
+              </div>
+            </div>
+            <div class="iccu-card">
+              <h3 class="iccu-card__title">ICCU 부품 구조 보기</h3>
+              <div id="iccu3dContainer" class="iccu-3d-wrap"></div>
+            </div>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="panel-header">
+            <h2>차량 목록 + 예측 가격</h2>
+            <div class="panel-controls">
+              <label for="carsLimit" class="limit-label">표시 개수:</label>
+              <select id="carsLimit" class="limit-select">
+                <option value="20">20</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+              </select>
+              <button type="button" class="btn-refresh" id="btnCarsRefresh">새로고침</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>브랜드</th>
+                  <th>모델</th>
+                  <th>연식</th>
+                  <th>주행거리</th>
+                  <th>사고이력</th>
+                  <th>예측가격</th>
+                </tr>
+              </thead>
+              <tbody id="carsBody"></tbody>
+            </table>
+          </div>
+          <p id="carsEmpty" class="empty-msg">데이터 없음</p>
+        </section>
+        <section class="panel">
+          <h2>브랜드별 평균 예측가격</h2>
+          <div class="chart-container">
+            <canvas id="carsBrandChart"></canvas>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <span>Node.js + FastAPI · MariaDB</span>
+      <span class="footer-sep">|</span>
+      <span id="backendHint">대시보드 API: 동일 출처 (Node)</span>
+    </footer>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="iccu-3d.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

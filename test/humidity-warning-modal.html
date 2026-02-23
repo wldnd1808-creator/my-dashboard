@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>습도 위험 구간 경고 - 예측 기반 팝업 데모</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* 대시보드 테마와 일관된 변수 (azas-project / 제조 공정 대시보드 스타일) */
+    :root {
+      --bg: #0a0e14;
+      --surface: #141b23;
+      --surface-hover: #1a222c;
+      --border: #2d3748;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #39c5cf;
+      --accent-dim: #2da8b0;
+      --danger: #f85149;
+      --warning: #d29922;
+      --font: "Outfit", system-ui, sans-serif;
+      --radius: 12px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    /* 데모용 humidity 시뮬레이터 */
+    .demo-box {
+      text-align: center;
+      padding: 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .demo-box p { margin: 0 0 16px 0; color: var(--text-muted); }
+    .demo-box input { width: 120px; padding: 8px 12px; margin-right: 8px; }
+    .demo-box button {
+      padding: 10px 20px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    /* ── 습도 위험 구간 경고 모달 ── */
+    .humidity-warning-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      animation: fadeIn 0.25s ease;
+    }
+    .humidity-warning-overlay.is-open {
+      display: flex;
+    }
+
+    .humidity-warning-modal {
+      width: 100%;
+      max-width: 420px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow), 0 0 0 1px rgba(57, 197, 207, 0.1);
+      overflow: hidden;
+      animation: slideUp 0.3s ease;
+    }
+
+    .humidity-warning-modal__header {
+      padding: 20px 24px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .humidity-warning-modal__title {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .humidity-warning-modal__title .icon { font-size: 1.25rem; }
+
+    .humidity-warning-modal__body {
+      padding: 20px 24px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+    .humidity-warning-modal__body strong {
+      color: var(--text);
+    }
+
+    .humidity-warning-modal__actions {
+      display: flex;
+      gap: 12px;
+      padding: 16px 24px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .humidity-warning-modal__actions .btn {
+      flex: 1;
+      padding: 12px 20px;
+      font-family: var(--font);
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .humidity-warning-modal__actions .btn:hover {
+      transform: translateY(-1px);
+    }
+    .humidity-warning-modal__actions .btn--primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+      color: var(--bg);
+      box-shadow: 0 2px 8px rgba(57, 197, 207, 0.25);
+    }
+    .humidity-warning-modal__actions .btn--primary:hover {
+      box-shadow: 0 4px 16px rgba(57, 197, 207, 0.35);
+    }
+    .humidity-warning-modal__actions .btn--secondary {
+      background: var(--surface-hover);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .humidity-warning-modal__actions .btn--secondary:hover {
+      color: var(--text);
+      border-color: var(--text-muted);
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <!-- 데모: 습도 값 입력 후 트리거 테스트 -->
+  <div class="demo-box">
+    <p>습도 값을 입력하고 버튼을 눌러 경고 팝업을 테스트하세요 (72 초과 시 표시)</p>
+    <input type="number" id="humidityInput" value="75" min="0" max="100" placeholder="습도 %" />
+    <button type="button" id="btnCheckHumidity">습도 확인</button>
+  </div>
+
+  <!-- 예측 기반 경고 모달 (이 블록을 defect-analysis 페이지에 추가) -->
+  <div id="humidityWarningOverlay" class="humidity-warning-overlay" role="alertdialog" aria-modal="true" aria-labelledby="humidityWarningTitle">
+    <div class="humidity-warning-modal">
+      <div class="humidity-warning-modal__header">
+        <h2 id="humidityWarningTitle" class="humidity-warning-modal__title">
+          <span class="icon">🔍</span> 습도 위험 구간 진입 경고
+        </h2>
+      </div>
+      <div class="humidity-warning-modal__body">
+        습도 변수가 위험 구간에 진입 중입니다. 현재 추세라면 10분 내 불량률이 <strong>12%</strong>까지 상승할 것으로 예측됩니다. 제습 설비 강도를 <strong>'강'</strong>으로 높일까요?
+      </div>
+      <div class="humidity-warning-modal__actions">
+        <button type="button" class="btn btn--primary" id="btnApproveControl">설비 제어 승인</button>
+        <button type="button" class="btn btn--secondary" id="btnViewDetail">상세 데이터 보기</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── humidity 위험 구간 경고 모달 API ──
+    const HUMIDITY_DANGER_THRESHOLD = 72;
+    let humidityWarningShownThisSession = false; // 세션당 1회만 표시 (옵션)
+
+    function showHumidityWarningModal() {
+      const overlay = document.getElementById('humidityWarningOverlay');
+      if (overlay) overlay.classList.add('is-open');
+    }
+
+    function hideHumidityWarningModal() {
+      const overlay = document.getElementById('humidityWarningOverlay');
+      if (overlay) overlay.classList.remove('is-open');
+    }
+
+    function checkHumidityAndWarn(currentHumidity) {
+      if (currentHumidity > HUMIDITY_DANGER_THRESHOLD) {
+        // 필요 시: humidityWarningShownThisSession 체크로 중복 방지
+        showHumidityWarningModal();
+      }
+    }
+
+    // 버튼 이벤트
+    document.getElementById('btnApproveControl')?.addEventListener('click', () => {
+      hideHumidityWarningModal();
+      console.log('설비 제어 승인 클릭');
+      // TODO: 실제 설비 제어 API 호출
+    });
+    document.getElementById('btnViewDetail')?.addEventListener('click', () => {
+      hideHumidityWarningModal();
+      console.log('상세 데이터 보기 클릭');
+      // TODO: 상세 데이터 페이지로 이동
+    });
+
+    // 데모용
+    document.getElementById('btnCheckHumidity')?.addEventListener('click', () => {
+      const val = parseFloat(document.getElementById('humidityInput')?.value || 0);
+      checkHumidityAndWarn(val);
+    });
+  </script>
+</body>
+</html>
