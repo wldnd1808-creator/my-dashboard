@@ -129,6 +129,56 @@
   // 품질 기준값 (mAh/g)
   const QUALITY_THRESHOLD = 190;
 
+  /** 데모용 훈련 데이터 (백엔드 미연결 시 테이블·차트 표시) */
+  const DEMO_TRAINING = (function () {
+    const base = [
+      { feature1: 850, feature2: 12, target: 188.2 },
+      { feature1: 880, feature2: 14, target: 192.5 },
+      { feature1: 900, feature2: 15, target: 196.1 },
+      { feature1: 920, feature2: 16, target: 198.8 },
+      { feature1: 940, feature2: 18, target: 201.3 },
+      { feature1: 860, feature2: 13, target: 190.1 },
+      { feature1: 910, feature2: 15, target: 197.2 },
+      { feature1: 930, feature2: 17, target: 199.5 },
+      { feature1: 870, feature2: 14, target: 193.0 },
+      { feature1: 890, feature2: 15, target: 195.4 },
+      { feature1: 950, feature2: 19, target: 202.1 },
+      { feature1: 915, feature2: 16, target: 198.0 },
+    ];
+    return base.map(function (r, i) {
+      return {
+        id: i + 1,
+        created_at: new Date(Date.now() - (base.length - i) * 3600000).toISOString(),
+        feature1: r.feature1,
+        feature2: r.feature2,
+        target: r.target,
+      };
+    });
+  })();
+
+  /** 데모용 예측 결과 (백엔드 미연결 시 테이블·차트 표시) */
+  const DEMO_PREDICTIONS = (function () {
+    const base = [
+      { feature1: 900, feature2: 15, prediction_value: 195.2 },
+      { feature1: 910, feature2: 16, prediction_value: 197.8 },
+      { feature1: 880, feature2: 14, prediction_value: 192.1 },
+      { feature1: 930, feature2: 17, prediction_value: 199.5 },
+      { feature1: 870, feature2: 13, prediction_value: 189.0 },
+      { feature1: 920, feature2: 16, prediction_value: 198.2 },
+      { feature1: 940, feature2: 18, prediction_value: 201.0 },
+      { feature1: 890, feature2: 15, prediction_value: 194.5 },
+    ];
+    return base.map(function (r, i) {
+      return {
+        id: i + 1,
+        created_at: new Date(Date.now() - (base.length - i) * 7200000).toISOString(),
+        model_name: "cathode_model_v1",
+        input_summary: { feature1: r.feature1, feature2: r.feature2 },
+        prediction_value: r.prediction_value,
+      };
+    });
+  })();
+
   function clearResult() {
     predictResult.textContent = "";
     predictResult.classList.remove("success", "error");
@@ -268,7 +318,7 @@
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            labels: { color: "#e6edf3" },
+            labels: { color: "#202124" },
           },
           tooltip: {
             mode: "index",
@@ -277,12 +327,12 @@
         },
         scales: {
           x: {
-            ticks: { color: "#8b949e" },
-            grid: { color: "#2d3748" },
+            ticks: { color: "#5f6368" },
+            grid: { color: "#e8eaed" },
           },
           y: {
-            ticks: { color: "#8b949e" },
-            grid: { color: "#2d3748" },
+            ticks: { color: "#5f6368" },
+            grid: { color: "#e8eaed" },
           },
         },
       },
@@ -344,7 +394,7 @@
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            labels: { color: "#e6edf3" },
+            labels: { color: "#202124" },
           },
           tooltip: {
             mode: "index",
@@ -366,19 +416,19 @@
             title: {
               display: true,
               text: (config.feature1?.description || "소성온도 (Feature1, °C)"),
-              color: "#8b949e",
+              color: "#5f6368",
             },
-            ticks: { color: "#8b949e" },
-            grid: { color: "#2d3748" },
+            ticks: { color: "#5f6368" },
+            grid: { color: "#e8eaed" },
           },
           y: {
             title: {
               display: true,
               text: "방전용량 (Target, mAh/g)",
-              color: "#8b949e",
+              color: "#5f6368",
             },
-            ticks: { color: "#8b949e" },
-            grid: { color: "#2d3748" },
+            ticks: { color: "#5f6368" },
+            grid: { color: "#e8eaed" },
             min: Math.min(...capacities) - 10,
             max: Math.max(...capacities) + 10,
           },
@@ -425,7 +475,7 @@
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { labels: { color: "#e6edf3" } },
+          legend: { labels: { color: "#202124" } },
           tooltip: {
             callbacks: {
               label: function (context) {
@@ -441,14 +491,14 @@
         },
         scales: {
           x: {
-            title: { display: true, text: `${f1Label} (${f1Unit})`, color: "#8b949e" },
-            ticks: { color: "#8b949e" },
-            grid: { color: "#2d3748" },
+            title: { display: true, text: `${f1Label} (${f1Unit})`, color: "#5f6368" },
+            ticks: { color: "#5f6368" },
+            grid: { color: "#e8eaed" },
           },
           y: {
-            title: { display: true, text: `${f2Label} (${f2Unit})`, color: "#8b949e" },
-            ticks: { color: "#8b949e" },
-            grid: { color: "#2d3748" },
+            title: { display: true, text: `${f2Label} (${f2Unit})`, color: "#5f6368" },
+            ticks: { color: "#5f6368" },
+            grid: { color: "#e8eaed" },
           },
         },
       },
@@ -620,12 +670,16 @@
 
   /** 백엔드 미연결 시 카드에 표시할 데모 값 */
   function applyDemoStats() {
-    if (trainingCount) trainingCount.textContent = "150";
-    if (predictionsCount) predictionsCount.textContent = "42";
-    if (avgPrediction) avgPrediction.textContent = "198.52";
-    if (latestPrediction) latestPrediction.textContent = "195.20";
-    const au = document.getElementById("avgPredictionUnit");
-    const lu = document.getElementById("latestPredictionUnit");
+    var nTrain = DEMO_TRAINING.length;
+    var nPred = DEMO_PREDICTIONS.length;
+    if (trainingCount) trainingCount.textContent = nTrain;
+    if (predictionsCount) predictionsCount.textContent = nPred;
+    var vals = DEMO_PREDICTIONS.map(function (r) { return parseFloat(r.prediction_value) || 0; });
+    var avg = vals.length ? vals.reduce(function (a, b) { return a + b; }, 0) / vals.length : 0;
+    if (avgPrediction) avgPrediction.textContent = avg.toFixed(2);
+    if (latestPrediction) latestPrediction.textContent = vals.length ? vals[vals.length - 1].toFixed(2) : "-";
+    var au = document.getElementById("avgPredictionUnit");
+    var lu = document.getElementById("latestPredictionUnit");
     if (au) au.textContent = "mAh/g";
     if (lu) lu.textContent = "mAh/g";
   }
@@ -757,24 +811,16 @@
       showEmptyStateGuide(training.length, predictions.length);
     } catch (e) {
       applyDemoStats();
-      trainingBody.innerHTML = "";
-      predictionsBody.innerHTML = "";
-      trainingEmpty.classList.remove("hidden");
-      predictionsEmpty.classList.remove("hidden");
-      trainingEmpty.textContent = "백엔드에 연결되지 않았습니다. 데모용 샘플 값이 카드에 표시됩니다. 로컬에서 node_backend를 실행하면 실제 데이터를 볼 수 있습니다.";
-      predictionsEmpty.textContent = "백엔드에 연결되지 않았습니다.";
-      if (predictionsChart) {
-        predictionsChart.destroy();
-        predictionsChart = null;
-      }
-      if (temperatureCapacityChart) {
-        temperatureCapacityChart.destroy();
-        temperatureCapacityChart = null;
-      }
-      if (trainingChart) {
-        trainingChart.destroy();
-        trainingChart = null;
-      }
+      renderTraining(DEMO_TRAINING);
+      renderPredictions(DEMO_PREDICTIONS);
+      updatePredictionsChart(DEMO_PREDICTIONS);
+      updateTemperatureCapacityChart(DEMO_TRAINING);
+      updateTrainingChart(DEMO_TRAINING);
+      trainingEmpty.classList.add("hidden");
+      predictionsEmpty.classList.add("hidden");
+      if (trainingEmpty) trainingEmpty.textContent = "데이터 없음";
+      if (predictionsEmpty) predictionsEmpty.textContent = "데이터 없음";
+      showEmptyStateGuide(DEMO_TRAINING.length, DEMO_PREDICTIONS.length);
       loadInsightsDemo();
     } finally {
       setLoading(false);

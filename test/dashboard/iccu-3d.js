@@ -26,10 +26,10 @@
     if (!container || typeof THREE === "undefined") return;
 
     var width = container.clientWidth;
-    var height = Math.max(420, container.clientHeight);
+    var height = Math.max(520, container.clientHeight);
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x161b22);
+    scene.background = new THREE.Color(0xf0f2f5);
 
     camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100);
     camera.position.set(2.5, 2, 2.5);
@@ -51,7 +51,7 @@
     PARTS.forEach(function (p) {
       var geo = new THREE.BoxGeometry(p.size[0], p.size[1], p.size[2]);
       var mat = new THREE.MeshStandardMaterial({
-        color: 0x2a2a2a,
+        color: 0x9e9e9e,
         emissive: 0x000000,
         emissiveIntensity: 0,
         metalness: 0.4,
@@ -107,7 +107,7 @@
   function onResize() {
     if (!container || !renderer || !camera) return;
     var width = container.clientWidth;
-    var height = Math.max(420, container.clientHeight);
+    var height = Math.max(520, container.clientHeight);
     renderer.setSize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
@@ -123,7 +123,7 @@
       var mesh = meshParts[name];
       if (!mesh || !mesh.material) return;
       var isHighlight = partName != null && partName !== "" && partName === name;
-      mesh.material.color.setHex(isHighlight ? 0x660000 : 0x2a2a2a);
+      mesh.material.color.setHex(isHighlight ? 0x660000 : 0x9e9e9e);
       mesh.material.emissive.setHex(isHighlight ? 0xff2222 : 0x000000);
       mesh.material.emissiveIntensity = isHighlight ? 0.9 : 0;
     });
