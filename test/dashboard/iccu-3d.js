@@ -26,7 +26,7 @@
     if (!container || typeof THREE === "undefined") return;
 
     var width = container.clientWidth;
-    var height = Math.max(280, container.clientHeight);
+    var height = Math.max(420, container.clientHeight);
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x161b22);
@@ -107,7 +107,7 @@
   function onResize() {
     if (!container || !renderer || !camera) return;
     var width = container.clientWidth;
-    var height = Math.max(280, container.clientHeight);
+    var height = Math.max(420, container.clientHeight);
     renderer.setSize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();

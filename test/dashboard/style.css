@@ -134,6 +134,10 @@ body {
   width: fit-content;
 }
 
+.tab-nav--hidden {
+  display: none !important;
+}
+
 .tab-btn {
   padding: 10px 20px;
   font-family: var(--font);
@@ -670,6 +674,14 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
+.iccu-card--large {
+  padding: 20px;
+}
+
+.iccu-card--large .iccu-3d-wrap {
+  min-height: 560px;
+}
+
 .iccu-card__title {
   margin: 0 0 12px 0;
   font-size: 1rem;
@@ -679,7 +691,7 @@ body {
 
 .iccu-3d-wrap {
   width: 100%;
-  min-height: 280px;
+  min-height: 420px;
   border-radius: var(--radius-sm);
   overflow: hidden;
   background: var(--surface);

@@ -25,13 +25,12 @@
       </div>
     </header>
 
-    <nav class="tab-nav" role="tablist">
+    <nav class="tab-nav tab-nav--hidden" role="tablist" aria-hidden="true">
       <button type="button" class="tab-btn active" role="tab" data-tab="analysis" aria-selected="true">정량 분석 모델</button>
-      <button type="button" class="tab-btn" role="tab" data-tab="used-cars" aria-selected="false">중고차 가격 예측</button>
     </nav>
 
     <main class="main">
-      <!-- 탭 1: 정량 분석 모델 -->
+      <!-- 정량 분석 모델 -->
       <div id="tab-analysis" class="tab-panel active" role="tabpanel">
       <section class="panel system-status-panel" aria-label="시스템 상태">
         <h2>시스템 상태</h2>
@@ -46,6 +45,13 @@
           </div>
         </div>
         <p class="status-hint" id="statusHint">백엔드가 모두 연결되면 예측을 실행할 수 있습니다.</p>
+      </section>
+
+      <section class="panel iccu-panel">
+        <h2>ICCU 부품 구조 보기</h2>
+        <div class="iccu-card iccu-card--large">
+          <div id="iccu3dContainer" class="iccu-3d-wrap"></div>
+        </div>
       </section>
 
       <div id="emptyStateGuide" class="empty-state-guide hidden" role="status" aria-live="polite"></div>
@@ -220,91 +226,6 @@
           <p id="timelineEmpty" class="empty-msg">이벤트 없음</p>
         </div>
       </section>
-      </div>
-
-      <!-- 탭 2: 중고차 가격 예측 -->
-      <div id="tab-used-cars" class="tab-panel" role="tabpanel" aria-hidden="true">
-        <section class="panel system-status-panel" aria-label="시스템 상태">
-          <h2>시스템 상태</h2>
-          <div class="status-grid" id="systemStatusCars">
-            <div class="status-item">
-              <span class="status-label">Node.js (대시보드 API)</span>
-              <span class="status-badge pending" id="statusNodeCars">확인 중…</span>
-            </div>
-            <div class="status-item">
-              <span class="status-label">FastAPI (예측 API)</span>
-              <span class="status-badge pending" id="statusFastApiCars">확인 중…</span>
-            </div>
-          </div>
-        </section>
-        <section class="cards">
-          <div class="card">
-            <span class="card-label">전체 차량</span>
-            <span class="card-value" id="carsTotalCount">-</span>
-            <span class="card-unit">대</span>
-          </div>
-          <div class="card">
-            <span class="card-label">평균 예측가격</span>
-            <span class="card-value" id="carsAvgPrice">-</span>
-            <span class="card-unit">만원</span>
-          </div>
-          <div class="card">
-            <span class="card-label">최고 예측가격</span>
-            <span class="card-value" id="carsMaxPrice">-</span>
-            <span class="card-unit">만원</span>
-          </div>
-        </section>
-        <section class="panel histogram-panel">
-          <h2>1. 주행거리별 고장 빈도 히스토그램</h2>
-          <div class="histogram-section">
-            <div class="histogram-area">
-              <div class="chart-container chart-container--histogram">
-                <canvas id="mileageHistogramChart"></canvas>
-              </div>
-            </div>
-            <div class="iccu-card">
-              <h3 class="iccu-card__title">ICCU 부품 구조 보기</h3>
-              <div id="iccu3dContainer" class="iccu-3d-wrap"></div>
-            </div>
-          </div>
-        </section>
-        <section class="panel">
-          <div class="panel-header">
-            <h2>차량 목록 + 예측 가격</h2>
-            <div class="panel-controls">
-              <label for="carsLimit" class="limit-label">표시 개수:</label>
-              <select id="carsLimit" class="limit-select">
-                <option value="20">20</option>
-                <option value="50" selected>50</option>
-                <option value="100">100</option>
-              </select>
-              <button type="button" class="btn-refresh" id="btnCarsRefresh">새로고침</button>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>브랜드</th>
-                  <th>모델</th>
-                  <th>연식</th>
-                  <th>주행거리</th>
-                  <th>사고이력</th>
-                  <th>예측가격</th>
-                </tr>
-              </thead>
-              <tbody id="carsBody"></tbody>
-            </table>
-          </div>
-          <p id="carsEmpty" class="empty-msg">데이터 없음</p>
-        </section>
-        <section class="panel">
-          <h2>브랜드별 평균 예측가격</h2>
-          <div class="chart-container">
-            <canvas id="carsBrandChart"></canvas>
-          </div>
-        </section>
       </div>
     </main>
 

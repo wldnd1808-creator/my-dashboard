@@ -94,12 +94,6 @@
       });
       btn.classList.add("active");
       btn.setAttribute("aria-selected", "true");
-      if (tabId === "used-cars") {
-        loadCars();
-        setTimeout(function () {
-          if (typeof window.initIccu3dResize === "function") window.initIccu3dResize();
-        }, 300);
-      }
     });
   });
   
@@ -131,12 +125,7 @@
   let predictionsChart = null;
   let trainingChart = null;
   let temperatureCapacityChart = null;
-  let carsBrandChart = null;
-  let mileageHistogramChart = null;
 
-  // 주행거리 구간별 ICCU 부품 매핑 (히스토그램 막대 인덱스 → 3D 부품명)
-  const MILEAGE_BIN_TO_PART = ["main", "connector1", "connector2", "cell1", "cell2", "top"];
-  
   // 품질 기준값 (mAh/g)
   const QUALITY_THRESHOLD = 190;
 
@@ -616,15 +605,35 @@
       }
     } catch (_) {
       if (statusNode) {
-        statusNode.textContent = "확인 실패";
-        statusNode.className = "status-badge fail";
+        statusNode.textContent = "데모 모드";
+        statusNode.className = "status-badge ok";
       }
       if (statusFastApi) {
-        statusFastApi.textContent = "확인 불가";
-        statusFastApi.className = "status-badge pending";
+        statusFastApi.textContent = "데모 모드";
+        statusFastApi.className = "status-badge ok";
       }
-      if (statusHint) statusHint.textContent = "Node 서버에 연결할 수 없습니다. node_backend에서 npm start 를 실행하세요.";
+      if (statusHint) {
+        statusHint.textContent = "백엔드가 연결되지 않은 상태입니다. 아래 카드에는 데모용 샘플 값이 표시됩니다.";
+      }
     }
+  }
+
+  /** 백엔드 미연결 시 카드에 표시할 데모 값 */
+  function applyDemoStats() {
+    if (trainingCount) trainingCount.textContent = "150";
+    if (predictionsCount) predictionsCount.textContent = "42";
+    if (avgPrediction) avgPrediction.textContent = "198.52";
+    if (latestPrediction) latestPrediction.textContent = "195.20";
+    const au = document.getElementById("avgPredictionUnit");
+    const lu = document.getElementById("latestPredictionUnit");
+    if (au) au.textContent = "mAh/g";
+    if (lu) lu.textContent = "mAh/g";
+  }
+
+  /** 백엔드 미연결 시 인사이트 영역에 표시 */
+  function loadInsightsDemo() {
+    if (anomalyAlerts) anomalyAlerts.innerHTML = '<span class="insight-ok">데모 모드 — 백엔드 연결 후 확인 가능</span>';
+    if (performanceAlert) performanceAlert.innerHTML = '<span class="insight-ok">데모 모드 — 백엔드 연결 후 확인 가능</span>';
   }
 
   /** Node 백엔드: /api/dashboard/summary | FastAPI 직접: /api/training-data + /api/predictions */
@@ -747,19 +756,13 @@
       loadInsights();
       showEmptyStateGuide(training.length, predictions.length);
     } catch (e) {
-      trainingCount.textContent = "-";
-      predictionsCount.textContent = "-";
-      avgPrediction.textContent = "-";
-      latestPrediction.textContent = "-";
-      const au = document.getElementById("avgPredictionUnit");
-      const lu = document.getElementById("latestPredictionUnit");
-      if (au) au.textContent = "";
-      if (lu) lu.textContent = "";
+      applyDemoStats();
       trainingBody.innerHTML = "";
       predictionsBody.innerHTML = "";
       trainingEmpty.classList.remove("hidden");
       predictionsEmpty.classList.remove("hidden");
-      trainingEmpty.textContent = "연결 실패: " + (e.message || String(e)) + " 새로고침 버튼으로 다시 시도하세요.";
+      trainingEmpty.textContent = "백엔드에 연결되지 않았습니다. 데모용 샘플 값이 카드에 표시됩니다. 로컬에서 node_backend를 실행하면 실제 데이터를 볼 수 있습니다.";
+      predictionsEmpty.textContent = "백엔드에 연결되지 않았습니다.";
       if (predictionsChart) {
         predictionsChart.destroy();
         predictionsChart = null;
@@ -772,6 +775,7 @@
         trainingChart.destroy();
         trainingChart = null;
       }
+      loadInsightsDemo();
     } finally {
       setLoading(false);
       updateSystemStatus();
@@ -862,205 +866,6 @@
   if (btnInsightsRefresh) {
     btnInsightsRefresh.addEventListener("click", () => loadInsights());
   }
-  
-  // 중고차 탭
-  const carsBody = el("carsBody");
-  const carsEmpty = el("carsEmpty");
-  const carsLimit = el("carsLimit");
-  const btnCarsRefresh = el("btnCarsRefresh");
-  
-  async function fetchCarsWithPrediction(limit = 50, offset = 0) {
-    const res = await fetch(`/api/used-cars/with-prediction?limit=${limit}&offset=${offset}`);
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
-  }
-  
-  function renderCars(cars) {
-    if (!carsBody || !carsEmpty) return;
-    if (!Array.isArray(cars) || cars.length === 0) {
-      carsBody.innerHTML = "";
-      carsEmpty.classList.remove("hidden");
-      carsEmpty.textContent = "데이터 없음. MariaDB에 used_cars 데이터가 있는지 확인하고 setup_used_cars.bat을 실행하세요.";
-      return;
-    }
-    carsEmpty.classList.add("hidden");
-    carsBody.innerHTML = cars
-      .map((c) => {
-        const price = c.predicted_price != null ? Number(c.predicted_price).toLocaleString() + "만원" : "-";
-        const acc = c.accident_count != null ? c.accident_count : 0;
-        return `<tr>
-          <td>${c.id ?? "-"}</td>
-          <td>${escapeHtml(c.brand ?? "-")}</td>
-          <td>${escapeHtml(c.model ?? "-")}</td>
-          <td>${c.model_year ?? "-"}</td>
-          <td>${c.mileage != null ? c.mileage.toLocaleString() + "km" : "-"}</td>
-          <td>${acc}회</td>
-          <td><strong>${price}</strong></td>
-        </tr>`;
-      })
-      .join("");
-  }
-  
-  function updateMileageHistogram(cars) {
-    const ctx = document.getElementById("mileageHistogramChart");
-    if (!ctx) return;
-    if (mileageHistogramChart) {
-      mileageHistogramChart.destroy();
-      mileageHistogramChart = null;
-    }
-    const bins = [
-      { label: "0~2만 km", min: 0, max: 20000 },
-      { label: "2~4만 km", min: 20000, max: 40000 },
-      { label: "4~6만 km", min: 40000, max: 60000 },
-      { label: "6~8만 km", min: 60000, max: 80000 },
-      { label: "8~10만 km", min: 80000, max: 100000 },
-      { label: "10만+ km", min: 100000, max: Infinity },
-    ];
-    const counts = bins.map(function (b) {
-      return (cars || []).filter(function (c) {
-        const m = c.mileage != null ? Number(c.mileage) : 0;
-        return m >= b.min && m < b.max;
-      }).length;
-    });
-    mileageHistogramChart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: bins.map(function (b) { return b.label; }),
-        datasets: [{
-          label: "차량 수 (빈도)",
-          data: counts,
-          backgroundColor: "rgba(88, 166, 255, 0.6)",
-          borderColor: "rgb(88, 166, 255)",
-          borderWidth: 1,
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        onClick: function (_ev, elements) {
-          if (elements.length === 0) return;
-          const idx = elements[0].index;
-          const part = MILEAGE_BIN_TO_PART[idx];
-          if (part && typeof window.setIccuHighlight === "function") {
-            window.setIccuHighlight(part);
-          }
-        },
-        plugins: {
-          legend: { labels: { color: "#e6edf3" } },
-          tooltip: { mode: "index", intersect: false },
-        },
-        scales: {
-          x: { ticks: { color: "#8b949e" }, grid: { color: "#2d3748" } },
-          y: { ticks: { color: "#8b949e" }, grid: { color: "#2d3748" } },
-        },
-      },
-    });
-  }
-
-  function updateCarsBrandChart(cars) {
-    const ctx = document.getElementById("carsBrandChart");
-    if (!ctx) return;
-    if (carsBrandChart) carsBrandChart.destroy();
-    const withPrice = (cars || []).filter((c) => c.predicted_price != null && c.brand);
-    if (withPrice.length === 0) {
-      ctx.getContext("2d").clearRect(0, 0, ctx.width, ctx.height);
-      return;
-    }
-    const byBrand = {};
-    withPrice.forEach((c) => {
-      const b = c.brand || "기타";
-      if (!byBrand[b]) byBrand[b] = { sum: 0, count: 0 };
-      byBrand[b].sum += Number(c.predicted_price);
-      byBrand[b].count += 1;
-    });
-    const brands = Object.keys(byBrand).sort();
-    const avgPrices = brands.map((b) => Math.round(byBrand[b].sum / byBrand[b].count));
-    carsBrandChart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: brands,
-        datasets: [{
-          label: "평균 예측가격 (만원)",
-          data: avgPrices,
-          backgroundColor: "rgba(88, 166, 255, 0.6)",
-          borderColor: "rgb(88, 166, 255)",
-          borderWidth: 1,
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { labels: { color: "#e6edf3" } },
-          tooltip: { mode: "index", intersect: false },
-        },
-        scales: {
-          x: { ticks: { color: "#8b949e" }, grid: { color: "#2d3748" } },
-          y: { ticks: { color: "#8b949e" }, grid: { color: "#2d3748" } },
-        },
-      },
-    });
-  }
-  
-  async function updateCarsSystemStatus() {
-    const statusNodeCars = el("statusNodeCars");
-    const statusFastApiCars = el("statusFastApiCars");
-    if (!statusNodeCars || !statusFastApiCars) return;
-    try {
-      const res = await fetch("/api/dashboard/health-status");
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      statusNodeCars.textContent = data.node?.ok ? "연결됨" : "오류";
-      statusNodeCars.className = "status-badge " + (data.node?.ok ? "ok" : "fail");
-      statusFastApiCars.textContent = data.fastapi?.ok ? "연결됨" : (data.fastapi?.message || "연결 안 됨");
-      statusFastApiCars.className = "status-badge " + (data.fastapi?.ok ? "ok" : "fail");
-    } catch (_) {
-      statusNodeCars.textContent = "확인 실패";
-      statusNodeCars.className = "status-badge fail";
-      statusFastApiCars.textContent = "확인 불가";
-      statusFastApiCars.className = "status-badge fail";
-    }
-  }
-  
-  async function loadCars() {
-    const carsTotalCount = el("carsTotalCount");
-    const carsAvgPrice = el("carsAvgPrice");
-    const carsMaxPrice = el("carsMaxPrice");
-    const limit = parseInt(carsLimit?.value, 10) || 50;
-    try {
-      const data = await fetchCarsWithPrediction(limit, 0);
-      const cars = data.cars || [];
-      renderCars(cars);
-      updateMileageHistogram(cars);
-      updateCarsBrandChart(cars);
-      updateCarsSystemStatus();
-      if (typeof window.setIccuHighlight === "function") {
-        window.setIccuHighlight(null);
-      }
-      if (carsTotalCount) carsTotalCount.textContent = cars.length;
-      if (cars.length > 0) {
-        const prices = cars.map((c) => Number(c.predicted_price)).filter((v) => !isNaN(v));
-        if (carsAvgPrice) carsAvgPrice.textContent = prices.length ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length).toLocaleString() : "-";
-        if (carsMaxPrice) carsMaxPrice.textContent = prices.length ? Math.max(...prices).toLocaleString() : "-";
-      } else {
-        if (carsAvgPrice) carsAvgPrice.textContent = "-";
-        if (carsMaxPrice) carsMaxPrice.textContent = "-";
-      }
-    } catch (e) {
-      if (carsBody) carsBody.innerHTML = "";
-      if (carsEmpty) {
-        carsEmpty.classList.remove("hidden");
-        carsEmpty.textContent = "연결 실패: " + (e.message || String(e));
-      }
-      if (carsTotalCount) carsTotalCount.textContent = "-";
-      if (carsAvgPrice) carsAvgPrice.textContent = "-";
-      if (carsMaxPrice) carsMaxPrice.textContent = "-";
-      updateCarsSystemStatus();
-    }
-  }
-  
-  if (btnCarsRefresh) btnCarsRefresh.addEventListener("click", () => loadCars());
-  if (carsLimit) carsLimit.addEventListener("change", () => loadCars());
 
   // 프리셋 버튼 이벤트
   document.querySelectorAll(".btn-preset").forEach((btn) => {
@@ -1077,6 +882,10 @@
   });
 
   load();
+
+  setTimeout(function () {
+    if (typeof window.initIccu3dResize === "function") window.initIccu3dResize();
+  }, 500);
 
   // Socket.io 실시간 고장 알림 (Node 백엔드에서만 연결)
   if (API_BASE === "" && typeof io !== "undefined") {
