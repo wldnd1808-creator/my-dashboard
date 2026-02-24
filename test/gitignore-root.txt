@@ -1,0 +1,9 @@
+# 아래 내용을 C:\Users\Admin\Desktop\.gitignore 로 저장하세요.
+
+*.ows
+*.csv
+*.xlsx
+*.docx
+*.hwp
+*.png
+!test/dashboard/**/*.png

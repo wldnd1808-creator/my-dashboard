@@ -1,0 +1,5 @@
+# test 폴더 내부용
+node_modules/
+.env
+*.log
+.DS_Store
